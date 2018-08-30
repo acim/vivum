@@ -6,6 +6,7 @@ import (
 	"github.com/samuel/go-zookeeper/zk"
 )
 
+// Conn extends go-zookeeper functionality.
 type Conn struct {
 	*zk.Conn
 }
@@ -26,6 +27,38 @@ func (c *Conn) ChildrenC(path string) ([]string, *zk.Stat, <-chan zk.Event, erro
 }
 
 // GetC implements Zookeeper's getData method with watcher continuosly sending events.
-func (c *Conn) GetC(path string) ([]byte, *zk.Stat, <-chan zk.Event, error) {
-	return c.Conn.GetW(path)
+func (c *Conn) GetC(path string, refreshThreshold time.Duration) <-chan Event {
+	events := make(chan Event)
+	timer := time.NewTimer(refreshThreshold)
+
+	go func(path string) {
+		for {
+			data, stat, event, err := c.Conn.GetW(path)
+			events <- Event{
+				Data: data,
+				Stat: stat,
+				Err:  err,
+			}
+			select {
+			case e := <-event:
+				events <- Event{
+					Data: data,
+					Stat: stat,
+					Evt:  &e,
+					Err:  err,
+				}
+			case <-timer.C:
+			}
+		}
+	}(path)
+
+	return events
+}
+
+// Event contains aggregate data from zk.ChildrenW.
+type Event struct {
+	Data []byte
+	Stat *zk.Stat
+	Evt  *zk.Event
+	Err  error
 }
