@@ -9,3 +9,8 @@ This project extends the package providing additional methods ChildrenC, ExistsC
 # Requirements
 
 * Go 1.11 (just package management, otherwise comaptible with older versions)
+
+# TODO
+
+* Docker container providing environment for testing
+* unit tests
