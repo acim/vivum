@@ -1,3 +1,6 @@
+// Package zkc extends zk.Conn adding methods ChildrenC, ExistsC and GetC which return channels which would
+// continuosly send respective events to receivers. If you pass done argument to any of them you get possibility
+// to stop goroutines that take care of single events taken from ChildrenW, ExistsW and GetW respectively.
 package zkc
 
 import (
@@ -23,7 +26,7 @@ func New(servers []string, sessionTimeout time.Duration, refreshThreshold time.D
 }
 
 // ChildrenC implements Zookeeper's getChildren method with watcher continuosly sending events.
-func (c *Conn) ChildrenC(path string) <-chan ChildrenEvent {
+func (c *Conn) ChildrenC(path string, done <-chan struct{}) <-chan ChildrenEvent {
 	events := make(chan ChildrenEvent)
 	timer := time.NewTimer(c.rt)
 
@@ -44,6 +47,9 @@ func (c *Conn) ChildrenC(path string) <-chan ChildrenEvent {
 					Err:      err,
 				}
 			case <-timer.C:
+			case <-done:
+				close(events)
+				return
 			}
 		}
 	}(path)
@@ -52,7 +58,7 @@ func (c *Conn) ChildrenC(path string) <-chan ChildrenEvent {
 }
 
 // GetC implements Zookeeper's getData method with watcher continuosly sending events.
-func (c *Conn) GetC(path string) <-chan DataEvent {
+func (c *Conn) GetC(path string, done <-chan struct{}) <-chan DataEvent {
 	events := make(chan DataEvent)
 	timer := time.NewTimer(c.rt)
 
@@ -73,6 +79,9 @@ func (c *Conn) GetC(path string) <-chan DataEvent {
 					Err:  err,
 				}
 			case <-timer.C:
+			case <-done:
+				close(events)
+				return
 			}
 		}
 	}(path)
@@ -81,7 +90,7 @@ func (c *Conn) GetC(path string) <-chan DataEvent {
 }
 
 // ExistsC implements Zookeeper's exists method with watcher continuosly sending events.
-func (c *Conn) ExistsC(path string) <-chan ExistsEvent {
+func (c *Conn) ExistsC(path string, done <-chan struct{}) <-chan ExistsEvent {
 	events := make(chan ExistsEvent)
 	timer := time.NewTimer(c.rt)
 
@@ -102,6 +111,9 @@ func (c *Conn) ExistsC(path string) <-chan ExistsEvent {
 					Err:    err,
 				}
 			case <-timer.C:
+			case <-done:
+				close(events)
+				return
 			}
 		}
 	}(path)
