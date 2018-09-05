@@ -25,7 +25,7 @@ func New(servers []string, sessionTimeout time.Duration, refreshThreshold time.D
 	return &Conn{Conn: conn, rt: refreshThreshold}, nil
 }
 
-// ChildrenC implements Zookeeper's getChildren method with watcher continuously sending events.
+// ChildrenC extends ChildrenW functionality by continuously sending events to a caller.
 func (c *Conn) ChildrenC(path string, done <-chan struct{}) <-chan ChildrenEvent {
 	events := make(chan ChildrenEvent)
 	timer := time.NewTimer(c.rt)
@@ -48,7 +48,7 @@ func (c *Conn) ChildrenC(path string, done <-chan struct{}) <-chan ChildrenEvent
 	return events
 }
 
-// GetC implements Zookeeper's getData method with watcher continuously sending events.
+// GetC extends GetW functionality by continuously sending events to a caller.
 func (c *Conn) GetC(path string, done <-chan struct{}) <-chan DataEvent {
 	events := make(chan DataEvent)
 	timer := time.NewTimer(c.rt)
@@ -71,7 +71,7 @@ func (c *Conn) GetC(path string, done <-chan struct{}) <-chan DataEvent {
 	return events
 }
 
-// ExistsC implements Zookeeper's exists method with watcher continuously sending events.
+// ExistsC extends ExistsW functionality by continuously sending events to a caller.
 func (c *Conn) ExistsC(path string, done <-chan struct{}) <-chan ExistsEvent {
 	events := make(chan ExistsEvent)
 	timer := time.NewTimer(c.rt)
