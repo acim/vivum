@@ -33,19 +33,10 @@ func (c *Conn) ChildrenC(path string, done <-chan struct{}) <-chan ChildrenEvent
 	go func(path string) {
 		for {
 			children, stat, event, err := c.Conn.ChildrenW(path)
-			events <- ChildrenEvent{
-				Children: children,
-				Stat:     stat,
-				Err:      err,
-			}
+			events <- ChildrenEvent{Children: children, Stat: stat, Err: err}
 			select {
 			case e := <-event:
-				events <- ChildrenEvent{
-					Children: children,
-					Stat:     stat,
-					Evt:      &e,
-					Err:      err,
-				}
+				events <- ChildrenEvent{Children: children, Stat: stat, Evt: &e, Err: err}
 			case <-timer.C:
 			case <-done:
 				close(events)
@@ -65,19 +56,10 @@ func (c *Conn) GetC(path string, done <-chan struct{}) <-chan DataEvent {
 	go func(path string) {
 		for {
 			data, stat, event, err := c.Conn.GetW(path)
-			events <- DataEvent{
-				Data: data,
-				Stat: stat,
-				Err:  err,
-			}
+			events <- DataEvent{Data: data, Stat: stat, Err: err}
 			select {
 			case e := <-event:
-				events <- DataEvent{
-					Data: data,
-					Stat: stat,
-					Evt:  &e,
-					Err:  err,
-				}
+				events <- DataEvent{Data: data, Stat: stat, Evt: &e, Err: err}
 			case <-timer.C:
 			case <-done:
 				close(events)
@@ -97,19 +79,10 @@ func (c *Conn) ExistsC(path string, done <-chan struct{}) <-chan ExistsEvent {
 	go func(path string) {
 		for {
 			exists, stat, event, err := c.Conn.ExistsW(path)
-			events <- ExistsEvent{
-				Exists: exists,
-				Stat:   stat,
-				Err:    err,
-			}
+			events <- ExistsEvent{Exists: exists, Stat: stat, Err: err}
 			select {
 			case e := <-event:
-				events <- ExistsEvent{
-					Exists: exists,
-					Stat:   stat,
-					Evt:    &e,
-					Err:    err,
-				}
+				events <- ExistsEvent{Exists: exists, Stat: stat, Evt: &e, Err: err}
 			case <-timer.C:
 			case <-done:
 				close(events)
