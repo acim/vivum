@@ -4,6 +4,7 @@
 package zkc
 
 import (
+	"context"
 	"time"
 
 	"github.com/samuel/go-zookeeper/zk"
@@ -15,7 +16,7 @@ type Conn struct {
 	rt time.Duration
 }
 
-// New creates new *zkc.Conn instance.
+// New creates *zkc.Conn instance.
 func New(servers []string, sessionTimeout time.Duration, refreshThreshold time.Duration) (*Conn, error) {
 	conn, _, err := zk.Connect(servers, sessionTimeout)
 	if err != nil {
@@ -26,7 +27,7 @@ func New(servers []string, sessionTimeout time.Duration, refreshThreshold time.D
 }
 
 // ChildrenC extends ChildrenW functionality by continuously sending events to a caller.
-func (c *Conn) ChildrenC(path string, done <-chan struct{}) <-chan ChildrenEvent {
+func (c *Conn) ChildrenC(ctx context.Context, path string) <-chan ChildrenEvent {
 	events := make(chan ChildrenEvent)
 	timer := time.NewTimer(c.rt)
 
@@ -38,7 +39,7 @@ func (c *Conn) ChildrenC(path string, done <-chan struct{}) <-chan ChildrenEvent
 			case e := <-event:
 				events <- ChildrenEvent{Children: children, Stat: stat, Evt: &e, Err: err}
 			case <-timer.C:
-			case <-done:
+			case <-ctx.Done():
 				close(events)
 				return
 			}
@@ -49,7 +50,7 @@ func (c *Conn) ChildrenC(path string, done <-chan struct{}) <-chan ChildrenEvent
 }
 
 // GetC extends GetW functionality by continuously sending events to a caller.
-func (c *Conn) GetC(path string, done <-chan struct{}) <-chan DataEvent {
+func (c *Conn) GetC(ctx context.Context, path string) <-chan DataEvent {
 	events := make(chan DataEvent)
 	timer := time.NewTimer(c.rt)
 
@@ -61,7 +62,7 @@ func (c *Conn) GetC(path string, done <-chan struct{}) <-chan DataEvent {
 			case e := <-event:
 				events <- DataEvent{Data: data, Stat: stat, Evt: &e, Err: err}
 			case <-timer.C:
-			case <-done:
+			case <-ctx.Done():
 				close(events)
 				return
 			}
@@ -72,7 +73,7 @@ func (c *Conn) GetC(path string, done <-chan struct{}) <-chan DataEvent {
 }
 
 // ExistsC extends ExistsW functionality by continuously sending events to a caller.
-func (c *Conn) ExistsC(path string, done <-chan struct{}) <-chan ExistsEvent {
+func (c *Conn) ExistsC(ctx context.Context, path string) <-chan ExistsEvent {
 	events := make(chan ExistsEvent)
 	timer := time.NewTimer(c.rt)
 
@@ -84,7 +85,7 @@ func (c *Conn) ExistsC(path string, done <-chan struct{}) <-chan ExistsEvent {
 			case e := <-event:
 				events <- ExistsEvent{Exists: exists, Stat: stat, Evt: &e, Err: err}
 			case <-timer.C:
-			case <-done:
+			case <-ctx.Done():
 				close(events)
 				return
 			}
